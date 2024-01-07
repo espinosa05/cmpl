@@ -113,7 +113,7 @@ void parse_media_file(Media_Data data, char *file_path)
     ssize_t file = open(file_path, O_RDONLY);
 
     if (file < 0) {
-        fprintf(stderr, "ERROR: failed to open media file: %s\n", strerror(errno));
+        ERRO("failed to open media file: %s\n", strerror(errno));
         delete_media_data(data);
         exit(EXIT_FAILURE);
     }

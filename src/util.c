@@ -8,11 +8,13 @@ ssize_t get_file_size(ssize_t fd)
     return size;
 }
 
-void log_impl(const char *tag, const char *fmt, ...)
+void log_impl(const char *tag, int lf, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    fprintf(stderr, "[%s]:");
+    fprintf(stderr, "[%s]: ", tag);
     vfprintf(stderr, fmt, args);
+    if (lf)
+        printf("\n");
     va_end(args);
 }

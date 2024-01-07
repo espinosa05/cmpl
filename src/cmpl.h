@@ -9,7 +9,7 @@ Media_Data new_media_data();
 Media_Player new_media_player();
 
 void delete_media_data(Media_Data data);
-void delete_medida_player(Media_Player player);
+void delete_media_player(Media_Player player);
 
 void parse_media_file(Media_Data data, char *file_path);
 void play_media_file(Media_Player player, Media_Data data);

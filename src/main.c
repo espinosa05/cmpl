@@ -18,5 +18,7 @@ int main(int argc, char **argv)
     parse_media_file(data, media_path);
     play_media_file(player, data);
 
+    delete_media_data(data);
+    delete_media_player(player);
     return EXIT_SUCCESS;
 }
