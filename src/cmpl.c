@@ -157,7 +157,7 @@ void parse_media_file(Media_Data data, char *file_path)
 
 void play_media_file(Media_Player player, Media_Data data)
 {
-    IMPLEMENT_ME();
+    IMPL();
 }
 
 static size_t get_media_type(struct isobmff_box_list *ftyp_box)
@@ -171,8 +171,9 @@ static size_t read_isobmff_box(struct isobmff_box_list *box, uint32_t *buffer)
     box->header.size = be32toh(*buffer);
     box->header.type  = *(buffer + ISOBMFF_BOX_TYPE_OFFSET);
 
-    printf("header size: %d\n", box->header.size);
-    printf("header type: 0x%08x\n", box->header.type);
+    INFO(STR_SYM_FMT_X(box->header.type));
+    INFO(STR_SYM_FMT_X(box->header.size));
+
     if (box->header.size == 0) {
         box->next = NULL;
         return LAST_ISOBMFF_BOX;

@@ -7,3 +7,12 @@ ssize_t get_file_size(ssize_t fd)
     lseek(fd, 0, SEEK_SET);
     return size;
 }
+
+void log_impl(const char *tag, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    fprintf(stderr, "[%s]:");
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+}
