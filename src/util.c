@@ -14,7 +14,9 @@ void log_impl(const char *tag, int lf, const char *fmt, ...)
     va_start(args, fmt);
     fprintf(stderr, "[%s]: ", tag);
     vfprintf(stderr, fmt, args);
+
     if (lf)
-        printf("\n");
+        fputc('\n', stderr);
+
     va_end(args);
 }

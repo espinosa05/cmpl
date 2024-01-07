@@ -7,8 +7,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <endian.h>
 #include <errno.h>
 #include <fcntl.h>
+
 
 struct isobmff_box_list {
     struct {
@@ -46,13 +48,13 @@ struct media_data {
     } raw;
     struct {
         struct isobmff_box_list *boxes;
+        uint32_t *brands;
         uint32_t codec_id;
-        size_t type;
-
     } media;
 };
 
 struct media_player {
+    // TODO implement media player
 };
 
 enum isobmff_box_types {
@@ -64,17 +66,29 @@ enum isobmff_box_types {
     BOX_TYPE_FREE = 0x65657266,
 };
 
+enum isobmff_ftyp_major_brands {
+    BRAND_ISOM = 0x6d6f7369,
+    BRAND_MP42 = 0x3234706d,
+    BRAND_MP41 = 0x3134706d,
+    BRAND_3GP4 = 0x34706733,
+    BRAND_3GP5 = 0x35606733,
+};
+
 #define LAST_ISOBMFF_BOX 1
 #define READ_NEXT_ISOBMFF_BOX 0
-
 #define EACH_ISOBMFF_BOX(list, element) struct isobmff_box_list *element = list; list != NULL; list = list->next
 
-static void load_media_file(Media_Data data, ssize_t file);
+/* static declarations start */
+static int load_media_file(Media_Data data, char *file_path);
 static struct isobmff_box_list *new_isobmff_box();
-static size_t get_media_type(struct isobmff_box_list *ftyp_box);
+static uint32_t *get_brand_array(struct isobmff_box_list *ftyp_box);
 static void delete_isobmff_box_list(struct isobmff_box_list *head);
 static void delete_isobmff_box(struct isobmff_box_list *element);
 static size_t read_isobmff_box(struct isobmff_box_list *box, uint32_t *buffer);
+static char *boxtype2cstr(uint32_t ftyp, char buff[5]);
+static void read_meta_data(Media_Data data, struct isobmff_box_list *box);
+static int is_valid_box(struct isobmff_box_list *box);
+/* static declarations end */
 
 Media_Data new_media_data()
 {
@@ -96,10 +110,14 @@ void delete_media_data(Media_Data data)
     free(data);
 }
 
-Media_Player new_media_player()
+Media_Player new_media_player(Media_Data data)
 {
     struct media_player *player = malloc(sizeof(struct media_player));
     explicit_bzero(player, sizeof(*player));
+
+
+    TODO("setup video player structure");
+
     return player;
 }
 
@@ -108,60 +126,58 @@ void delete_media_player(Media_Player player)
     free(player);
 }
 
+enum {
+    MAJOR_BRAND = 0,
+    MINOR_VERSION,
+    COMPAT_BRANDS,
+};
+
 void parse_media_file(Media_Data data, char *file_path)
 {
-    ssize_t file = open(file_path, O_RDONLY);
-
-    if (file < 0) {
-        ERRO("failed to open media file: %s\n", strerror(errno));
+    if (!load_media_file(data, file_path)) {
         delete_media_data(data);
         exit(EXIT_FAILURE);
     }
-
-    load_media_file(data, file);
-    close(file);
 
     struct isobmff_box_list *current_box = data->media.boxes;
     void *box_address = data->raw.buffer;
 
     while (LAST_ISOBMFF_BOX !=  read_isobmff_box(current_box, box_address)) {
-        TODO("write the handlers");
-        switch(current_box->header.type)
-        {
-            case BOX_TYPE_FTYP:
-                break;
-            case BOX_TYPE_MDAT:
-                break;
-            case BOX_TYPE_MOOV:
-                break;
-            case BOX_TYPE_MOOF:
-                break;
-            case BOX_TYPE_FREE:
-                break;
-            case BOX_TYPE_PNOT:
-                break;
-        }
-
         box_address += current_box->header.size;
         current_box = current_box->next;
     }
 
     struct isobmff_box_list *ftyp_box = data->media.boxes;
-    struct isobmff_box_list *box_list = ftyp_box->next;
 
-    data->media.type = get_media_type(ftyp_box);
+    /* the ftyp box should *ALWAYS* be first */
+    if (ftyp_box->header.type == BOX_TYPE_FTYP) {
+        data->media.brands = get_brand_array(ftyp_box);
+    } else {
+        /* or else it's an mp41 compatible file */
+        data->media.brands = malloc(sizeof(uint32_t));
+        data->media.brands[MAJOR_BRAND] = BRAND_MP41;
+    }
 
-    for (EACH_ISOBMFF_BOX(box_list, box)) {
+    /* now skip the first box */
+    struct isobmff_box_list *remaining_boxes = data->media.boxes->next;
+
+    for (EACH_ISOBMFF_BOX(remaining_boxes, box)) {
+        switch (box->header.type) {
+            case BOX_TYPE_MDAT: {
+                read_meta_data(data, box);
+            } break;
+        }
     }
 }
 
-void play_media_file(Media_Player player, Media_Data data)
+void play_media_file(Media_Player player)
 {
     IMPL();
 }
 
-static size_t get_media_type(struct isobmff_box_list *ftyp_box)
+static uint32_t *get_brand_array(struct isobmff_box_list *ftyp_box)
 {
+    return (uint32_t *)((void *)ftyp_box->address + sizeof(uint64_t));
 }
 
 #define ISOBMFF_BOX_TYPE_OFFSET 1
@@ -174,13 +190,19 @@ static size_t read_isobmff_box(struct isobmff_box_list *box, uint32_t *buffer)
     INFO(STR_SYM_FMT_X(box->header.type));
     INFO(STR_SYM_FMT_X(box->header.size));
 
-    if (box->header.size == 0) {
+    if (!is_valid_box(box)) {
+        ERRO("corrupted media file!");
+        exit(EXIT_FAILURE);
+    }
+
+    if (box->header.size == 0 && box->header.type == 0) {
         box->next = NULL;
         return LAST_ISOBMFF_BOX;
     }
 
     box->address = buffer; /* save the address for later */
     box->next = new_isobmff_box();
+
     return READ_NEXT_ISOBMFF_BOX;
 }
 
@@ -202,14 +224,52 @@ static void delete_isobmff_box_list(struct isobmff_box_list *head)
         return;
 
     struct isobmff_box_list *next = head->next;
-    free(head);
+    delete_isobmff_box(head);
 
     delete_isobmff_box_list(next);
 }
 
-static void load_media_file(Media_Data data, ssize_t file)
+static int load_media_file(Media_Data data, char *file_path)
 {
-    data->raw.size = get_file_size(file);
+    ssize_t fd = open(file_path, O_RDONLY);
+    if (fd < 0) {
+        ERRO("failed to open mediafile: %s: %s", file_path, strerror(errno));
+        return FALSE;
+    }
+    data->raw.size = get_file_size(fd);
     data->raw.buffer = malloc(data->raw.size);
-    read(file, data->raw.buffer, data->raw.size);
+    read(fd, data->raw.buffer, data->raw.size);
+    close(fd);
+    return TRUE;
+}
+
+static char *boxtype2cstr(uint32_t ftyp, char buff[5])
+{
+    uint32_t t = ftyp;
+    memcpy(buff, &t, 4);
+    buff[4] = '\0';
+    return buff;
+}
+
+static void read_meta_data(Media_Data data, struct isobmff_box_list *box)
+{
+    IMPL();
+}
+
+#define BOX_TYPE_ENDB 0x00000000U
+
+static int is_valid_box(struct isobmff_box_list *box)
+{
+    TODO("Fix this abomination");
+    /* i *REALLY* don't like this */
+    if (BOX_TYPE_FTYP == box->header.type
+        || BOX_TYPE_MDAT == box->header.type
+        || BOX_TYPE_MOOV == box->header.type
+        || BOX_TYPE_MOOF == box->header.type
+        || BOX_TYPE_PNOT == box->header.type
+        || BOX_TYPE_FREE == box->header.type
+        || BOX_TYPE_ENDB == box->header.type)
+        return TRUE;
+
+    return FALSE;
 }
