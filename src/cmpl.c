@@ -76,7 +76,7 @@ enum isobmff_ftyp_major_brands {
 
 #define LAST_ISOBMFF_BOX 1
 #define READ_NEXT_ISOBMFF_BOX 0
-#define EACH_ISOBMFF_BOX(list, element) struct isobmff_box_list *element = list; list != NULL; list = list->next
+#define EACH_ISOBMFF_BOX(list, element) struct isobmff_box_list *element = list; element != NULL; element = element->next
 
 /* static declarations start */
 static int load_media_file(Media_Data data, char *file_path);
