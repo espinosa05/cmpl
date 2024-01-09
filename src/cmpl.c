@@ -167,12 +167,14 @@ void parse_media_file(Media_Data data, char *file_path)
     struct isobmff_box_list *remaining_boxes = data->media.boxes->next;
 
     for (EACH_ISOBMFF_BOX(remaining_boxes, box)) {
+
         {
             char box_str[5] = { 0 };
             printf("box: %s\n", boxtype2cstr(box->header.type, box_str));
         }
         switch (box->header.type) {
             case BOX_TYPE_MOOV: {
+
             } break;
             case BOX_TYPE_MOOF: {
             } break;
@@ -205,11 +207,7 @@ static size_t read_isobmff_box(struct isobmff_box_list *box, uint32_t *buffer)
 
     INFO(STR_SYM_FMT_X(box->header.type));
     INFO(STR_SYM_FMT_X(box->header.size));
-
-    if (!is_valid_box(box)) {
-        ERRO("corrupted media file!");
-        exit(EXIT_FAILURE);
-    }
+    ASSERT(is_valid_box(box), FATAL, "corrupted media file!");
 
     if (box->header.size == 0 && box->header.type == 0) {
         box->next = NULL;
