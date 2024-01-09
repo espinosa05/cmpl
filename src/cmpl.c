@@ -89,7 +89,6 @@ static char *boxtype2cstr(uint32_t ftyp, char buff[5]);
 static void read_meta_data(Media_Data data, struct isobmff_box_list *box);
 static int is_valid_box(struct isobmff_box_list *box);
 
-static void dump_box_contents(struct isobmff_box_list *box);
 /* static declarations end */
 
 Media_Data new_media_data()
@@ -288,16 +287,4 @@ static int is_valid_box(struct isobmff_box_list *box)
         return TRUE;
 
     return FALSE;
-}
-
-static void dump_box_contents(struct isobmff_box_list *box)
-{
-    uint32_t *chunk_base = box->address;
-    for (size_t i = 0; i < box->header.size; i += sizeof(uint32_t)) {
-        uint32_t chunk = *(chunk_base++);
-        printf("%");
-
-        if (8%(i))
-            fprintf(stderr, "\n");
-        }
 }
