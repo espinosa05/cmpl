@@ -144,18 +144,23 @@ void parse_media_file(Media_Data data, char *file_path)
     }
 
     struct isobmff_box_list *current_box = data->media.boxes;
-    void *box_address = data->raw.buffer;
+    void *base_address = data->raw.buffer;
+    uint64_t off = 0;
 
-    while (LAST_ISOBMFF_BOX !=  read_isobmff_box(current_box, box_address)) {
-        box_address += current_box->header.size;
+    while (LAST_ISOBMFF_BOX !=  read_isobmff_box(current_box, base_address + off)) {
+        off += current_box->header.size;
+        assert_f(off <= data->raw.size, FATAL, "box size points out of bounds");
         current_box = current_box->next;
     }
 
     struct isobmff_box_list *ftyp_box = data->media.boxes;
+    struct isobmff_box_list *remaining_boxes = ftyp_box; /* start at the first box */
 
     /* the ftyp box should *ALWAYS* be first */
     if (ftyp_box->header.type == BOX_TYPE_FTYP) {
         data->media.brands = get_brand_array(ftyp_box);
+        /* skip the first box */
+        remaining_boxes = ftyp_box->next;
     } else {
         /* or else we assume it's an mp41 compatible file */
         data->media.brands = malloc(2 * sizeof(uint32_t));
@@ -164,17 +169,10 @@ void parse_media_file(Media_Data data, char *file_path)
     }
 
     /* now skip the first box */
-    struct isobmff_box_list *remaining_boxes = data->media.boxes->next;
 
     for (EACH_ISOBMFF_BOX(remaining_boxes, box)) {
-
-        {
-            char box_str[5] = { 0 };
-            printf("box: %s\n", boxtype2cstr(box->header.type, box_str));
-        }
         switch (box->header.type) {
             case BOX_TYPE_MOOV: {
-
             } break;
             case BOX_TYPE_MOOF: {
             } break;
@@ -205,10 +203,10 @@ static size_t read_isobmff_box(struct isobmff_box_list *box, uint32_t *buffer)
     box->header.size = be32toh(*buffer);
     box->header.type  = *(buffer + ISOBMFF_BOX_TYPE_OFFSET);
 
-    INFO(STR_SYM_FMT_X(box->header.type));
-    INFO(STR_SYM_FMT_X(box->header.size));
-    ASSERT(is_valid_box(box), FATAL, "corrupted media file!");
+    INFO(STR_SYM_FMTCR_X(box->header.type));
+    INFO(STR_SYM_FMTCR_X(box->header.size));
 
+    assert_f(is_valid_box(box), FATAL, "corrupted media file!");
     if (box->header.size == 0 && box->header.type == 0) {
         box->next = NULL;
         return LAST_ISOBMFF_BOX;
@@ -246,10 +244,8 @@ static void delete_isobmff_box_list(struct isobmff_box_list *head)
 static int load_media_file(Media_Data data, char *file_path)
 {
     ssize_t fd = open(file_path, O_RDONLY);
-    if (fd < 0) {
-        ERRO("failed to open mediafile: %s: %s", file_path, strerror(errno));
-        return FALSE;
-    }
+    assert_f(fd > 0, FATAL, "failed to open media file %s", strerror(errno));
+
     data->raw.size = get_file_size(fd);
     data->raw.buffer = malloc(data->raw.size);
     read(fd, data->raw.buffer, data->raw.size);
