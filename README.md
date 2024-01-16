@@ -2,7 +2,7 @@
 THIS SOFTWARE IS NOT LICENSED AND MAY BE USED FREELY BY ANYONE.
 ---
 build the software by simply executing:
-```
+```sh
 $ ./build.sh
 ```
 

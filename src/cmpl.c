@@ -41,6 +41,15 @@ typedef struct {
     ISOBMFF_Box box;
 } Moof_Box;
 
+
+typedef struct {
+    ISOBMFF_Box box;
+} Pnot_Box;
+
+typedef struct {
+    ISOBMFF_Box box;
+} Free_Box;
+
 struct media_data {
     struct {
         ssize_t size;
@@ -51,6 +60,13 @@ struct media_data {
         uint32_t *brands;
         uint32_t codec_id;
     } media;
+
+    Ftyp_Box ftyp;
+    Mdat_Box mdat;
+    Moov_Box moov;
+    Moof_Box moof;
+    Pnot_Box pnot;
+    Free_Box free;
 };
 
 struct media_player {
@@ -143,6 +159,15 @@ void parse_media_file(Media_Data data, char *file_path)
         exit(EXIT_FAILURE);
     }
 
+    switch (get_media_standard(data)) {
+        case MEDIA_STANDARD_ISOBMFF: {
+            load_isobmff_media(data);
+        } break;
+        case MEDIA_STANDARD_MP3: {
+        } break;
+        case
+    }
+
     struct isobmff_box_list *current_box = data->media.boxes;
     void *base_address = data->raw.buffer;
     uint64_t off = 0;
@@ -153,14 +178,14 @@ void parse_media_file(Media_Data data, char *file_path)
         current_box = current_box->next;
     }
 
-    struct isobmff_box_list *ftyp_box = data->media.boxes;
+    struct isobmff_box_list *ftyp_entry = data->media.boxes;
     struct isobmff_box_list *remaining_boxes = ftyp_box; /* start at the first box */
 
     /* the ftyp box should *ALWAYS* be first */
-    if (ftyp_box->header.type == BOX_TYPE_FTYP) {
-        data->media.brands = get_brand_array(ftyp_box);
+    if (ftyp_entry->header.type == BOX_TYPE_FTYP) {
+        data->media.brands = get_brand_array(ftyp_entry);
         /* skip the first box */
-        remaining_boxes = ftyp_box->next;
+        remaining_boxes = ftyp_entry->next;
     } else {
         /* or else we assume it's an mp41 compatible file */
         data->media.brands = malloc(2 * sizeof(uint32_t));
@@ -169,16 +194,20 @@ void parse_media_file(Media_Data data, char *file_path)
     }
 
     /* now skip the first box */
-
     for (EACH_ISOBMFF_BOX(remaining_boxes, box)) {
         switch (box->header.type) {
             case BOX_TYPE_MOOV: {
+                data->media.moov.box.buffer = box.address;
+                read_medat(data);
             } break;
             case BOX_TYPE_MOOF: {
+                data->media.moof.box.buffer = box.address;
             } break;
             case BOX_TYPE_PNOT: {
+                data->media.pnot.box.buffer = box_address;
             } break;
             case BOX_TYPE_FREE: {
+                data->media.free.box.buffer = box_address;
             } break;
         }
     }
