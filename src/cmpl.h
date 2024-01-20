@@ -1,6 +1,15 @@
 #ifndef CMPL_H
 #define CMPL_H
 
+enum media_types {
+    EMPTY_MEDIA_TYPE = 0,
+    MEDIA_STANDARD_ISOBMFF,
+/* supported ISOBMFF sub types:
+*   mp4, mkv
+* */
+    MEDIA_STANDARD_MP3,
+    MEDIA_STANDARD_WAV,
+};
 
 typedef struct media_data* Media_Data;
 typedef struct media_player* Media_Player;

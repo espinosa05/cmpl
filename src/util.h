@@ -7,6 +7,8 @@
 
 #define TRUE 1
 #define FALSE 0
+#define SUCCESS TRUE
+#define FAILURE FALSE
 
 /* stolen from the public domain >:) */
 #include "ANSI-color-codes.h"
@@ -29,8 +31,13 @@
 #define STR_SYM_FMTCR_ZU(id) STR_SYM(id) "="BHBLU "%zu" CRESET "\n", id
 #define STR_SYM_FMTCR_LU(id) STR_SYM(id) "="BHBLU "%lu" CRESET "\n", id
 
+/* for new lines in log function calls */
+#define LOG_NL "\n"YEL">"CRESET"\t"
+
 #define FATAL 1
 #define NON_FATAL !FATAL
+
+#define NULL_TERM_SIZE sizeof(char)
 
 void log_impl(const char *tag, int lf, const char *fmt, ...) CMPL_PRINTF_FUNCTION(3, 4);
 #define USAGE(...) log_impl(BHCYN "USAGE" CRESET, 1, __VA_ARGS__)
@@ -53,6 +60,8 @@ void log_impl(const char *tag, int lf, const char *fmt, ...) CMPL_PRINTF_FUNCTIO
                 exit(1);                                    \
         }                                                   \
     } while (0)
+
+#define const_strlen(s) (sizeof(s) - NULL_TERM_SIZE)
 
 ssize_t get_file_size(ssize_t fd);
 
