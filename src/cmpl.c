@@ -53,6 +53,7 @@ struct media_data {
 
 struct media_player {
     // TODO implement media player
+    char buff[0x20];
 };
 /* static declarations start */
 static int load_media_file(Media_Data data, char *file_path);
@@ -81,8 +82,7 @@ void delete_media_data(Media_Data data)
 Media_Player new_media_player(Media_Data data)
 {
     struct media_player *player = malloc(sizeof(struct media_player));
-    explicit_bzero(player, sizeof(*player));
-
+    explicit_bzero(player, sizeof(struct media_player));
 
     TODO("setup video player structure");
 
@@ -141,7 +141,8 @@ void play_media_file(Media_Player player, Media_Data data)
 int load_media_file(Media_Data data, char *file_path)
 {
     ssize_t fd = open(file_path, O_RDONLY);
-    assert_f(fd > 0, FATAL, "failed to open media file %s", strerror(errno));
+    assert_f(fd > 0, FATAL, "failed to open media file!! More Info:"
+            LOG_NL"%s", strerror(errno));
 
     data->raw.size = get_file_size(fd);
     data->raw.buffer = calloc(1, data->raw.size);

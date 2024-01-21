@@ -158,7 +158,9 @@ static size_t read_isobmff_box(struct isobmff_box_list *box, uint32_t *buffer)
 
     INFO(STR_SYM_FMTCR_X(box->header.type));
     INFO(STR_SYM_FMTCR_X(box->header.size));
-    assert_f(is_valid_box(box), FATAL, "corrupted media file! (%s)", boxtype2cstr(box->header.type, (char [5]) {0}));
+    assert_f(is_valid_box(box), FATAL, "Media File is  Corrupted!!! More Info:"
+            LOG_NL"invalid box (%"PRIx32")", box->header.type);
+
     if (box->header.size == 0 && box->header.type == 0) {
         box->next = NULL;
         return LAST_ISOBMFF_BOX;
