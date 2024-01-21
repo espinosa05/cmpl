@@ -38,11 +38,11 @@ void log_impl(const char *tag, int lf, const char *fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    fprintf(stdout, "[%s]: ", tag);
-    vfprintf(stdout, fmt, args);
+    fprintf(stderr, "[%s]: ", tag);
+    vfprintf(stderr, fmt, args);
 
     if (lf)
-        fputc('\n', stdout);
+        fputc('\n', stderr);
 
     va_end(args);
 }
