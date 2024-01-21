@@ -1,5 +1,5 @@
 #!/bin/bash
-gcc -g -O3 -Wall                   \
+gcc -O3 -Wall -std=gnu99          \
     main.c                      \
     util.c                      \
     cmpl.c                      \

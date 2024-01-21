@@ -30,7 +30,7 @@ struct mp3_media_info {
     char buff[0x20];
 };
 
-void load_mp3_media(Media_Info **info)
+void load_mp3_media(Media_Info **info, void *buffer, ssize_t size)
 {
     IMPL();
 }
@@ -38,15 +38,18 @@ void load_mp3_media(Media_Info **info)
 ssize_t play_mp3_media(Media_Info *info)
 {
     IMPL();
+    return SUCCESS;
 }
 
 ssize_t stop_mp3_media(Media_Info *info)
 {
     IMPL();
+    return SUCCESS;
 }
 
 ssize_t delete_mp3_media(Media_Info *info)
 {
     IMPL();
+    return SUCCESS;
 }
 

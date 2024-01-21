@@ -47,6 +47,6 @@ void delete_media_data(Media_Data data);
 void delete_media_player(Media_Player player);
 
 void parse_media_file(Media_Data data, char *file_path);
-void play_media_file(Media_Player player);
+void play_media_file(Media_Player player, Media_Data data);
 
 #endif /* CMPL_H */

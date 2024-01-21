@@ -27,6 +27,9 @@
 #include "ISO_BMFF.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <endian.h>
 
 #include "../util.h"
 
@@ -38,7 +41,6 @@ static void delete_isobmff_box_list(struct isobmff_box_list *head);
 static void delete_isobmff_box(struct isobmff_box_list *element);
 static size_t read_isobmff_box(struct isobmff_box_list *box, uint32_t *buffer);
 static char *boxtype2cstr(uint32_t box, char buff[5]);
-static void read_meta_data(struct isobmff_media *media, struct isobmff_box_list *box);
 static int is_valid_box(struct isobmff_box_list *box);
 /* static function declarations end */
 
@@ -48,6 +50,10 @@ static int is_valid_box(struct isobmff_box_list *box);
 
 ssize_t load_isobmff_media(Media_Info **info, void *raw_buffer, ssize_t media_size)
 {
+    /* set the global contexts */
+    play_media = play_isobmff_media;
+    delete_media = delete_isobmff_media;
+
     struct isobmff_media *isobmff_info = new_isobmff_media();
     struct isobmff_box_list *media_box_list = new_isobmff_box();
     struct isobmff_box_list *current_box = media_box_list;
@@ -56,7 +62,7 @@ ssize_t load_isobmff_media(Media_Info **info, void *raw_buffer, ssize_t media_si
 
     while (READ_NEXT_ISOBMFF_BOX == read_isobmff_box(current_box, base_addr + off)) {
         off += current_box->header.size;
-        INFO(STR_SYM_FMTCR_X(off));
+        INFO(STR_SYM_FMTCR_X64(off));
         INFO(STR_SYM_FMTCR_S(boxtype2cstr(current_box->header.type, (char [5]) {0})));
         assert_f(off <= media_size, FATAL,
                 "Media file is corrupted!!! More info:"
@@ -74,7 +80,7 @@ ssize_t load_isobmff_media(Media_Info **info, void *raw_buffer, ssize_t media_si
     struct isobmff_box_list *remaining_boxes = ftyp_entry;
 
     if (ftyp_entry->header.type == BOX_TYPE_FTYP) {
-        isobmff_info->media.brands = get_brand_array(isobmff_info);
+        isobmff_info->media.brands = get_brand_array(ftyp_entry);
     } else {
         isobmff_info->media.brands = malloc(2 * sizeof(uint32_t));
         isobmff_info->media.brands[MAJOR_BRAND] = BRAND_MP41;
@@ -106,18 +112,27 @@ ssize_t delete_isobmff_media(Media_Info *info)
 {
     struct isobmff_media *isobmff_info = info;
 
-    TODO("free the data correctly!");
+    if (isobmff_info->media.boxes)
+        delete_isobmff_box_list(isobmff_info->media.boxes);
+
+
     free(isobmff_info);
+
+    return SUCCESS;
 }
 
 ssize_t play_isobmff_media(Media_Info *info)
 {
     IMPL();
+
+    return SUCCESS;
 }
 
 ssize_t stop_isobmff_media(Media_Info *info)
 {
     IMPL();
+
+    return SUCCESS;
 }
 
 static struct isobmff_media *new_isobmff_media()
@@ -143,7 +158,7 @@ static size_t read_isobmff_box(struct isobmff_box_list *box, uint32_t *buffer)
 
     INFO(STR_SYM_FMTCR_X(box->header.type));
     INFO(STR_SYM_FMTCR_X(box->header.size));
-    assert_f(is_valid_box(box), FATAL, "corrupted media file! (%s)", boxtype2cstr(box, (char [5]) {0}));
+    assert_f(is_valid_box(box), FATAL, "corrupted media file! (%s)", boxtype2cstr(box->header.type, (char [5]) {0}));
     if (box->header.size == 0 && box->header.type == 0) {
         box->next = NULL;
         return LAST_ISOBMFF_BOX;
@@ -183,11 +198,6 @@ static char *boxtype2cstr(uint32_t box, char buff[5])
     memcpy(buff, &box, 4);
     buff[4] = '\0';
     return buff;
-}
-
-static void read_meta_data(struct isobmff_media *media, struct isobmff_box_list *box)
-{
-    IMPL();
 }
 
 #define BOX_TYPE_ENDB 0x00000000U

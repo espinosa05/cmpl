@@ -24,37 +24,50 @@
  * For more information, please refer to <http://unlicense.org/>
  */
 
-#include "generic.h"
 #include "wav.h"
-
-#include "../util.h"
 
 #include <string.h>
 
 struct wav_media_info {
+    char buffer[0x20];
 };
 
 /* static function declarations start */
 static struct wav_media_info *new_wav_media_info();
-static void delete_wav_media_info();
 /* static function declarations end */
 
-ssize_t load_wav_media(Media_Info **info)
+ssize_t load_wav_media(Media_Info **info, void *buffer, ssize_t size)
 {
+    /* set global contexts */
+    play_media = play_wav_media;
+    delete_media = delete_wav_media;
+
     struct wav_media_info *wav_info = new_wav_media_info();
+    CMPL_UNUSED_SYMBOL(wav_info);
+
     IMPL();
+
+    *info = wav_info;
+
+    return SUCCESS;
 }
 
 ssize_t play_wav_media(Media_Info *info)
 {
     struct wav_media_info *wav_info = info;
+    CMPL_UNUSED_SYMBOL(wav_info);
     IMPL();
+
+    return SUCCESS;
 }
 
-static void delete_wav_media_info(Media_Info *info)
+ssize_t delete_wav_media(Media_Info *info)
 {
     struct wav_media_info *wav_info = info;
+    CMPL_UNUSED_SYMBOL(wav_info);
     IMPL();
+
+    return SUCCESS;
 }
 
 static struct wav_media_info *new_wav_media_info()

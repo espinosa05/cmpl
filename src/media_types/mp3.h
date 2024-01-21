@@ -28,10 +28,9 @@
 #define MEDIA_TYPES_MP3_H
 
 #include "generic.h"
-
 #include "../util.h"
 
-void load_mp3_media(Media_Info **info);
+void load_mp3_media(Media_Info **info, void *buffer, ssize_t size);
 
 ssize_t play_mp3_media(Media_Info *info);
 ssize_t stop_mp3_media(Media_Info *info);

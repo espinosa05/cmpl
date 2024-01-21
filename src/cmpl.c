@@ -118,10 +118,14 @@ void parse_media_file(Media_Data data, char *file_path)
                     data->raw.size); /* load subtype for ISOBMFF */
         } break;
         case MEDIA_STANDARD_MP3: {
-            load_mp3_media(&data->media.info);
+            load_mp3_media(&data->media.info,
+                    data->raw.buffer,
+                    data->raw.size);
         } break;
         case MEDIA_STANDARD_WAV: {
-            load_wav_media(&data->media.info);
+            load_wav_media(&data->media.info,
+                    data->raw.buffer,
+                    data->raw.size);
         } break;
         case EMPTY_MEDIA_TYPE:
             ERRO("file '%s' is of unknown file format", file_path);
@@ -129,7 +133,7 @@ void parse_media_file(Media_Data data, char *file_path)
     }
 }
 
-void play_media_file(Media_Player player)
+void play_media_file(Media_Player player, Media_Data data)
 {
     IMPL();
 }

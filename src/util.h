@@ -27,9 +27,12 @@
 #ifndef CMPL_UTIL_H
 #define CMPL_UTIL_H
 
+#define _ISO_C99_SOURCE /* feature macro for PRIx... marcos */
 #include <stdio.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <sys/types.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -39,9 +42,20 @@
 /* stolen from the public domain >:) */
 #include "ANSI-color-codes.h"
 
+/* attribute macros */
+#define __CMPL_ATTR_UNUSED__ __attribute__((unused))
+#define __CMPL_ATTR_DEPRECATED__ __attribute__((deprecated))
+#define __CMPL_ATTR_ALWAYS_INLINE__ __attribute__((always_inline))
+
+#define CMPL_UNUSED_SYMBOL(s) (void)s
 #define CMPL_PRINTF_FUNCTION(fmt_start, arg_start) __attribute__((format (printf, fmt_start, arg_start)))
 #define STR_SYM(id) #id
-#define STR_SYM_FMT_X(id) STR_SYM(id) "="BHBLU "0x%08X"CRESET, id
+
+#define STR_SYM_FMT_X8(id) STR_SYM(id) "="BHBLU "%#018"PRIx8 CRESET, id
+#define STR_SYM_FMT_X16(id) STR_SYM(id) "="BHBLU "%#018"PRIx16 CRESET, id
+#define STR_SYM_FMT_X32(id) STR_SYM(id) "="BHBLU "%#018"PRIx32 CRESET, id
+#define STR_SYM_FMT_X64(id) STR_SYM(id) "="BHBLU "%#018"PRIx64 CRESET, id
+
 #define STR_SYM_FMT_S(id) STR_SYM(id) "="BHGRN "%s" CRESET, id
 #define STR_SYM_FMT_D(id) STR_SYM(id) "="BHBLU "%d" CRESET, id
 #define STR_SYM_FMT_P(id) STR_SYM(id) "="BHMAG "%p" CRESET, id
@@ -49,7 +63,18 @@
 #define STR_SYM_FMT_ZU(id) STR_SYM(id) "="BHBLU "%zu" CRESET, id
 #define STR_SYM_FMT_LU(id) STR_SYM(id) "="BHBLU "%lu" CRESET, id
 
-#define STR_SYM_FMTCR_X(id) STR_SYM(id) "="BHBLU "0x%08X"CRESET "\n", id
+/* default for 32-bit unsigned integers */
+#define STR_SYM_FMT_X(id) STR_SYM_FMT_X32(id)
+
+/* Versions with carriage returns */
+#define STR_SYM_FMTCR_X8(id) STR_SYM(id) "="BHBLU "%#018"PRIx8 CRESET "\n", id
+#define STR_SYM_FMTCR_X16(id) STR_SYM(id) "="BHBLU "%#018"PRIx16 CRESET "\n", id
+#define STR_SYM_FMTCR_X32(id) STR_SYM(id) "="BHBLU "%#018"PRIx32 CRESET "\n", id
+#define STR_SYM_FMTCR_X64(id) STR_SYM(id) "="BHBLU "%#018"PRIx64 CRESET "\n", id
+
+/* default for 32-bit unsigned integers */
+#define STR_SYM_FMTCR_X(id) STR_SYM_FMTCR_X32(id)
+
 #define STR_SYM_FMTCR_S(id) STR_SYM(id) "="BHGRN "%s" CRESET "\n", id
 #define STR_SYM_FMTCR_D(id) STR_SYM(id) "="BHBLU "%d" CRESET "\n", id
 #define STR_SYM_FMTCR_P(id) STR_SYM(id) "="BHMAG "%p" CRESET "\n", id
@@ -66,6 +91,10 @@
 #define NULL_TERM_SIZE sizeof(char)
 
 void log_impl(const char *tag, int lf, const char *fmt, ...) CMPL_PRINTF_FUNCTION(3, 4);
+#ifdef _DEBUG
+
+#endif /* _DEBUG*/
+
 #define USAGE(...) log_impl(BHCYN "USAGE" CRESET, 1, __VA_ARGS__)
 #define INFO(...) log_impl(BHCYN "INFO" CRESET, 0, __VA_ARGS__)
 #define TODO(str) log_impl(BHYEL "TODO" CRESET, 1, "function: '%s' @ %s:%d: %s", __func__, __FILE__, __LINE__, str)
