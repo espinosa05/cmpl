@@ -87,20 +87,23 @@
 
 #define FATAL 1
 #define NON_FATAL !FATAL
-
 #define NULL_TERM_SIZE sizeof(char)
 
 void log_impl(const char *tag, int lf, const char *fmt, ...) CMPL_PRINTF_FUNCTION(3, 4);
-#ifdef _DEBUG
 
+#ifdef _DEBUG
+#   define log_msg(...) log_impl(__VA_ARGS__)
+#else
+/* disable all kind of logging in production mode */
+#   define log_msg(...) do { } while (0)
 #endif /* _DEBUG*/
 
-#define USAGE(...) log_impl(BHCYN "USAGE" CRESET, 1, __VA_ARGS__)
-#define INFO(...) log_impl(BHCYN "INFO" CRESET, 0, __VA_ARGS__)
-#define TODO(str) log_impl(BHYEL "TODO" CRESET, 1, "function: '%s' @ %s:%d: %s", __func__, __FILE__, __LINE__, str)
-#define WARN(...) log_impl(BHYEL "WARN" CRESET, 1, __VA_ARGS__)
-#define ERRO(...) log_impl(BHRED "ERRO" CRESET, 1, __VA_ARGS__)
-#define IMPL() log_impl(BHMAG "IMPL" CRESET, 1, "function: '%s' needs implementation @ %s:%d", __func__, __FILE__, __LINE__)
+#define USAGE(...) log_msg(BHCYN "USAGE" CRESET, 1, __VA_ARGS__)
+#define INFO(...) log_msg(BHCYN "INFO" CRESET, 0, __VA_ARGS__)
+#define TODO(str) log_msg(BHYEL "TODO" CRESET, 1, "function: '%s' @ %s:%d: %s", __func__, __FILE__, __LINE__, str)
+#define WARN(...) log_msg(BHYEL "WARN" CRESET, 1, __VA_ARGS__)
+#define ERRO(...) log_msg(BHRED "ERRO" CRESET, 1, __VA_ARGS__)
+#define IMPL() log_msg(BHMAG "IMPL" CRESET, 1, "function: '%s' needs implementation @ %s:%d", __func__, __FILE__, __LINE__)
 
 #define assert_f(cnd, fatal, ...)                           \
     do {                                                    \
@@ -117,6 +120,7 @@ void log_impl(const char *tag, int lf, const char *fmt, ...) CMPL_PRINTF_FUNCTIO
     } while (0)
 
 #define const_strlen(s) (sizeof(s) - NULL_TERM_SIZE)
+#define sizeof_array(a) (sizeof(a) / sizeof(a[0]))
 
 ssize_t get_file_size(ssize_t fd);
 

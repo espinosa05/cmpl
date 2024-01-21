@@ -45,8 +45,11 @@ static int is_valid_box(struct isobmff_box_list *box);
 /* static function declarations end */
 
 /* indeces for the first entries in the 'ftyp' brand array */
-#define MAJOR_BRAND 0
-#define MINOR_VERSION 1
+enum {
+    MAJOR_BRAND = 0,
+    MINOR_VERSION,
+    COMPAT_BRANDS,
+};
 
 ssize_t load_isobmff_media(Media_Info **info, void *raw_buffer, ssize_t media_size)
 {
@@ -144,8 +147,9 @@ static struct isobmff_media *new_isobmff_media()
 
 static uint32_t *get_brand_array(struct isobmff_box_list *ftyp_box)
 {
-    uint32_t *brand_array = malloc(ftyp_box->header.size - ISOBMFF_HDR_SIZE);
-    memcpy(brand_array, ftyp_box->address + ISOBMFF_HDR_SIZE, ftyp_box->header.size);
+    ssize_t brand_array_size = ftyp_box->header.size - ISOBMFF_HDR_SIZE;
+    uint32_t *brand_array = malloc(brand_array_size);
+    memcpy(brand_array, ftyp_box->address + ISOBMFF_HDR_SIZE, brand_array_size);
     return brand_array;
 }
 

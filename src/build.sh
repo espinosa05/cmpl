@@ -1,5 +1,5 @@
 #!/bin/bash
-gcc -ggdb -O3 -Wall -std=gnu99          \
+gcc -ggdb -D_DEBUG -O3 -Wall -std=gnu99          \
     main.c                      \
     util.c                      \
     cmpl.c                      \

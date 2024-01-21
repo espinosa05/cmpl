@@ -53,7 +53,8 @@ struct media_data {
 
 struct media_player {
     // TODO implement media player
-    char buff[0x20];
+    void *data;
+    uint32_t data32;
 };
 /* static declarations start */
 static int load_media_file(Media_Data data, char *file_path);
@@ -94,11 +95,7 @@ void delete_media_player(Media_Player player)
     free(player);
 }
 
-enum {
-    MAJOR_BRAND = 0,
-    MINOR_VERSION,
-    COMPAT_BRANDS,
-};
+
 
 void parse_media_file(Media_Data data, char *file_path)
 {
@@ -156,6 +153,7 @@ static size_t get_media_file_ext(char *path)
 {
     char *path_tok_ptr;
     char *path_copy = strdup(path);
+    assert_f(path_copy, "failed to allocate"STR_SYM(path_copy)": %s", strerror(errno));
     char *ext = NULL;
     char *tok = strtok_r(path_copy, ".", &path_tok_ptr);
 
@@ -191,6 +189,7 @@ static size_t get_media_type(Media_Data data)
 
     if (0 == memcmp(data->raw.buffer, "RIFF", const_strlen("RIFF")))
         return MEDIA_STANDARD_WAV;
+
     /* if the previous call to 'get_media_file_ext' returned non empty we just use the file extension
      * and rely on its implications (old mp3 files don't have any metadata and just come with raw frames for example)
      * */
