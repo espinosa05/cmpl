@@ -65,7 +65,6 @@ ssize_t load_isobmff_media(Media_Info **info, void *raw_buffer, ssize_t media_si
 
     while (READ_NEXT_ISOBMFF_BOX == read_isobmff_box(current_box, base_addr + off)) {
         off += current_box->header.size;
-        INFO(STR_SYM_FMTCR_X64(off));
         INFO(STR_SYM_FMTCR_S(boxtype2cstr(current_box->header.type, (char [5]) {0})));
         assert_f(off <= media_size, FATAL,
                 "Media file is corrupted!!! More info:"
@@ -147,7 +146,7 @@ static struct isobmff_media *new_isobmff_media()
 
 static uint32_t *get_brand_array(struct isobmff_box_list *ftyp_box)
 {
-    ssize_t brand_array_size = ftyp_box->header.size - ISOBMFF_HDR_SIZE;
+    uint32_t brand_array_size = ftyp_box->header.size - ISOBMFF_HDR_SIZE;
     uint32_t *brand_array = malloc(brand_array_size);
     memcpy(brand_array, ftyp_box->address + ISOBMFF_HDR_SIZE, brand_array_size);
     return brand_array;

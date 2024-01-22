@@ -153,7 +153,7 @@ static size_t get_media_file_ext(char *path)
 {
     char *path_tok_ptr;
     char *path_copy = strdup(path);
-    assert_f(path_copy, "failed to allocate"STR_SYM(path_copy)": %s", strerror(errno));
+    assert_f(path_copy, FATAL, "failed to allocate"STR_SYM(path_copy)": %s", strerror(errno));
     char *ext = NULL;
     char *tok = strtok_r(path_copy, ".", &path_tok_ptr);
 
